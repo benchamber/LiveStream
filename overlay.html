@@ -1,0 +1,243 @@
+<!doctype html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Overlay IRL – Moblin</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link href="https://fonts.googleapis.com/css2?family=Barlow+Condensed:wght@600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  /*
+    Overlay IRL pour Moblin (browser widget, 1920x1080).
+    Tout se règle dans l'adresse (URL), aucun code à toucher :
+
+      title   Texte du badge                 ?title=ROAD%20TO%2070.3
+      races   Courses, nom|date (AAAA-MM-JJ),  ?races=Ma%20course|2027-06-21;Autre|2027-08-15
+              séparées par ;  La prochaine à venir s'affiche toute seule.
+      race    Forcer une course de la liste  ?race=2  (1 = la première)
+      mode    run (défaut) ou bike           ?mode=bike
+      gel     Rappel de gel aux X minutes    ?gel=30  (0 = caché)
+      accent  Couleur d'accent, sans #       ?accent=C8F03C
+      chat    0 pour cacher le chat          ?chat=0
+      preview 1 = chiffres et chat d'exemple pour voir le look dans un navigateur
+      guide   1 = montre où placer les widgets texte de Moblin (X/Y en %)
+  */
+  :root { --accent: #C8F03C; --card: rgba(10,11,13,0.80); --muted: #aab1b8; }
+  * { box-sizing: border-box; }
+  html, body { margin: 0; height: 100%; background: transparent; overflow: hidden; }
+  body.preview { background: #2b3036; }
+  #stage {
+    position: absolute; top: 0; left: 0; width: 1920px; height: 1080px;
+    transform-origin: 0 0; font-family: Inter, -apple-system, system-ui, sans-serif; color: #fff;
+  }
+  .num { font-family: "Barlow Condensed", "SF Pro Display", system-ui, sans-serif; font-weight: 700; font-variant-numeric: tabular-nums; }
+  .label { font-size: 17px; letter-spacing: 0.14em; color: var(--muted); font-weight: 500; }
+  .pill { background: var(--card); border-radius: 10px; }
+
+  #topLeft { position: absolute; top: 42px; left: 48px; display: flex; gap: 18px; align-items: center; }
+  #title { background: var(--accent); color: #0b0c0e; font-size: 34px; letter-spacing: 0.04em; padding: 8px 20px; border-radius: 9px; }
+  #live { display: flex; align-items: center; gap: 12px; padding: 11px 18px; }
+  #live .dot { width: 13px; height: 13px; border-radius: 50%; background: #ff4d4d; }
+  #live .txt { font-size: 19px; font-weight: 600; letter-spacing: 0.08em; }
+  #elapsed { font-size: 19px; color: #c3c8ce; font-variant-numeric: tabular-nums; }
+
+  #topRight { position: absolute; top: 42px; right: 48px; display: flex; flex-direction: column; align-items: flex-end; gap: 12px; }
+  #race { padding: 12px 20px; text-align: right; }
+  #race .name { margin-top: 3px; font-size: 38px; }
+  #gel { display: flex; align-items: center; gap: 14px; padding: 12px 20px; }
+  #gel .t { font-size: 36px; }
+  #gel.due { background: var(--accent); color: #0b0c0e; }
+  #gel.due .label { color: #0b0c0e; }
+
+  #chat { position: absolute; right: 48px; top: 300px; width: 440px; display: flex; flex-direction: column; gap: 10px; }
+  .msg { background: rgba(10,11,13,0.72); border-radius: 12px; padding: 12px 16px; font-size: 21px; line-height: 1.35; transition: opacity 0.6s; overflow-wrap: anywhere; }
+  .msg .u { font-weight: 600; color: var(--accent); margin-right: 8px; }
+
+  #cards { position: absolute; left: 48px; bottom: 48px; display: flex; gap: 16px; }
+  .card { width: 300px; height: 150px; padding: 20px 24px; position: relative; }
+  .card .slot { position: absolute; left: 24px; top: 54px; font-size: 64px; line-height: 1; white-space: nowrap; }
+  .card .slot small { font-family: Inter, system-ui, sans-serif; font-size: 20px; font-weight: 500; color: var(--muted); margin-left: 8px; }
+
+  .guide { position: absolute; border: 2px dashed var(--accent); border-radius: 6px; padding: 6px 8px; font: 15px/1.35 ui-monospace, Menlo, monospace; color: #fff; background: rgba(0,0,0,0.55); }
+  #help { position: absolute; left: 48px; top: 150px; width: 760px; padding: 18px 22px; font-size: 17px; line-height: 1.5; }
+  #help code { font-family: ui-monospace, Menlo, monospace; color: var(--accent); }
+  .hidden { display: none !important; }
+</style>
+</head>
+<body>
+<div id="stage">
+  <div id="topLeft">
+    <div id="title" class="num">ROAD TO 70.3</div>
+    <div id="live" class="pill"><span class="dot"></span><span class="txt">EN DIRECT</span><span id="elapsed">0:00:00</span></div>
+  </div>
+
+  <div id="topRight">
+    <div id="race" class="pill hidden">
+      <div class="label" id="raceLabel">JOUR DE COURSE</div>
+      <div class="name num" id="raceName"></div>
+    </div>
+    <div id="gel" class="pill hidden">
+      <span class="label" id="gelLabel">GEL DANS</span>
+      <span class="t num" id="gelTime">30:00</span>
+    </div>
+  </div>
+
+  <div id="chat"></div>
+
+  <div id="cards"></div>
+</div>
+
+<script>
+(function () {
+  const W = 1920, H = 1080;
+  const q = new URLSearchParams(location.search);
+  const get = (k, d) => (q.has(k) && q.get(k) !== "" ? q.get(k) : d);
+  const inMoblin = typeof moblin !== "undefined";
+  const guide = get("guide", "0") === "1";
+  const preview = get("preview", inMoblin || guide ? "0" : "1") === "1";
+  if (guide && !inMoblin) document.body.classList.add("preview");
+  const mode = get("mode", "run") === "bike" ? "bike" : "run";
+  const stage = document.getElementById("stage");
+
+  // Fit the 1920x1080 stage to whatever size the page is shown at.
+  function fit() {
+    const s = Math.min(window.innerWidth / W, window.innerHeight / H) || 1;
+    stage.style.transform = "scale(" + s + ")";
+  }
+  window.addEventListener("resize", fit); fit();
+  if (preview) document.body.classList.add("preview");
+
+  // Accent + title
+  const accent = get("accent", "C8F03C").replace(/[^0-9a-fA-F]/g, "").slice(0, 6);
+  if (accent.length === 6 || accent.length === 3) document.documentElement.style.setProperty("--accent", "#" + accent);
+  document.getElementById("title").textContent = get("title", "ROAD TO 70.3");
+
+  // Cards. "fmt" = what to type in the matching Moblin text widget.
+  const CARDS = mode === "bike" ? [
+    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:NOM_GARMIN}", sample: "158", unit: "bpm" },
+    { label: "VITESSE", fmt: "{speed:km/h}", sample: "31.4", unit: "km/h" },
+    { label: "DISTANCE", fmt: "{distance:km}", sample: "48.2", unit: "km" },
+    { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "412", unit: "m" }
+  ] : [
+    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:NOM_GARMIN}", sample: "162", unit: "bpm" },
+    { label: "ALLURE", fmt: "{runningpace:NOM_CAPTEUR}", sample: "4:52", unit: "min/km" },
+    { label: "DISTANCE", fmt: "{distance:km}", sample: "12.4", unit: "km" },
+    { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "86", unit: "m" }
+  ];
+  const cardsEl = document.getElementById("cards");
+  CARDS.forEach(function (c) {
+    const card = document.createElement("div");
+    card.className = "card pill";
+    const l = document.createElement("div"); l.className = "label"; l.textContent = c.label;
+    card.appendChild(l);
+    if (preview) {
+      const s = document.createElement("div"); s.className = "slot num"; s.textContent = c.sample;
+      const u = document.createElement("small"); u.textContent = c.unit; s.appendChild(u);
+      card.appendChild(s);
+    }
+    cardsEl.appendChild(card);
+  });
+
+  // Guide: where each Moblin text widget goes, in % of the frame (top-left anchor).
+  if (guide) {
+    const help = document.createElement("div");
+    help.id = "help"; help.className = "pill";
+    help.innerHTML = "<b>Mode guide</b> — dans Moblin, ajoute un widget <b>Texte</b> par case : ancrage <b>haut gauche</b>, " +
+      "fond <b>transparent</b>, police grasse, chiffres monospace, taille ≈ 64. Tape la valeur <code>X</code>/<code>Y</code> indiquée. " +
+      "Remplace <code>NOM_GARMIN</code> par le nom de ta montre tel qu'il apparaît dans Moblin → Workout devices.";
+    stage.appendChild(help);
+    CARDS.forEach(function (c, i) {
+      // Card i sits at left 48 + i*(300+16), top 1080-48-150; the number slot is 24/54 px inside.
+      const x = 48 + i * 316 + 24, y = H - 48 - 150 + 54;
+      const g = document.createElement("div");
+      g.className = "guide";
+      g.style.left = (x - 10) + "px"; g.style.top = (y - 6) + "px";
+      g.textContent = CARDS[i].fmt + "\nX " + (x / W * 100).toFixed(1) + " %  Y " + (y / H * 100).toFixed(1) + " %";
+      g.style.whiteSpace = "pre";
+      stage.appendChild(g);
+    });
+  }
+
+  // Elapsed time since the overlay loaded (= since the scene started).
+  const t0 = Date.now();
+  const pad = (n) => String(n).padStart(2, "0");
+  const elapsedEl = document.getElementById("elapsed");
+
+  // Race countdown: next upcoming race in the list, or the one picked with ?race=N.
+  const races = get("races", "").split(";").map(function (s) {
+    const p = s.split("|");
+    return p.length === 2 ? { name: p[0].trim(), date: new Date(p[1].trim() + "T00:00:00") } : null;
+  }).filter(function (r) { return r && r.name && !isNaN(r.date); });
+  function updateRace() {
+    const el = document.getElementById("race");
+    if (!races.length) { el.classList.add("hidden"); return; }
+    const today = new Date(); today.setHours(0, 0, 0, 0);
+    let r = null;
+    const pick = parseInt(get("race", ""), 10);
+    if (pick >= 1 && pick <= races.length) r = races[pick - 1];
+    else r = races.filter(function (x) { return x.date >= today; }).sort(function (a, b) { return a.date - b.date; })[0];
+    if (!r) { el.classList.add("hidden"); return; }
+    const days = Math.round((r.date - today) / 86400000);
+    document.getElementById("raceName").textContent = (days === 0 ? "JOUR J" : "J-" + days) + " · " + r.name;
+    el.classList.remove("hidden");
+  }
+
+  // Gel reminder every N minutes; flashes for 60 s when due.
+  const gelMin = parseFloat(get("gel", "30"));
+  const gelEl = document.getElementById("gel");
+  if (gelMin > 0) gelEl.classList.remove("hidden");
+
+  function tick() {
+    const sec = Math.floor((Date.now() - t0) / 1000);
+    elapsedEl.textContent = Math.floor(sec / 3600) + ":" + pad(Math.floor(sec / 60) % 60) + ":" + pad(sec % 60);
+    if (gelMin > 0) {
+      const period = Math.round(gelMin * 60);
+      const into = sec % period;
+      if (sec >= period && into < 60) {
+        gelEl.classList.add("due");
+        document.getElementById("gelLabel").textContent = "GEL";
+        document.getElementById("gelTime").textContent = "MAINTENANT";
+      } else {
+        const left = period - into;
+        gelEl.classList.remove("due");
+        document.getElementById("gelLabel").textContent = "GEL DANS";
+        document.getElementById("gelTime").textContent = Math.floor(left / 60) + ":" + pad(left % 60);
+      }
+    }
+  }
+  updateRace(); tick();
+  setInterval(tick, 1000);
+  setInterval(updateRace, 60000);
+
+  // Chat: last 4 messages, each fades after 45 s.
+  const chatEl = document.getElementById("chat");
+  if (get("chat", "1") === "0") chatEl.classList.add("hidden");
+  function addChat(user, text) {
+    if (!text) return;
+    const m = document.createElement("div"); m.className = "msg";
+    const u = document.createElement("span"); u.className = "u"; u.textContent = user;
+    m.appendChild(u); m.appendChild(document.createTextNode(text));
+    chatEl.appendChild(m);
+    while (chatEl.children.length > 4) chatEl.removeChild(chatEl.firstChild);
+    setTimeout(function () { m.style.opacity = "0"; }, 45000);
+    setTimeout(function () { if (m.parentNode) m.parentNode.removeChild(m); }, 46000);
+  }
+  if (inMoblin) {
+    moblin.onmessage = function (data) {
+      if (data && data.chat && data.chat.message) {
+        const msg = data.chat.message;
+        const text = (msg.segments || []).map(function (s) { return s.text || ""; }).join("").replace(/\s+/g, " ").trim();
+        addChat(msg.user || "", text);
+      }
+    };
+    moblin.subscribe({ chat: {} });
+  } else if (preview) {
+    addChat("julie_trail", "lâche pas, la côte achève!");
+    addChat("marco.velo", "c'est quoi ta cible au km?");
+    addChat("coach_seb", "!sprint 200 m");
+  }
+})();
+</script>
+</body>
+</html>
