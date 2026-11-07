@@ -77,4 +77,20 @@ If the numbers are hidden behind the cards, move the Text widgets above the Brow
 
 ## Final addresses
 
-_To fill in once the race list is confirmed._
+Race: **IRONMAN 70.3 Maine**, Augusta, Sunday **2027-07-25**. To add races later, separate them with `;` in `races=`.
+
+Run:
+
+```
+https://benchamber.github.io/LiveStream/overlay.html?races=Ironman%2070.3%20Maine%7C2027-07-25
+```
+
+Bike:
+
+```
+https://benchamber.github.io/LiveStream/overlay.html?races=Ironman%2070.3%20Maine%7C2027-07-25&mode=bike
+```
+
+For lining up the text widgets, add `&guide=1` to the end, then remove it.
+
+If the repository is renamed, replace `LiveStream` in these addresses with the new name.
