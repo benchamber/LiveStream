@@ -17,7 +17,7 @@
               séparées par ;  La prochaine à venir s'affiche toute seule.
       race    Forcer une course de la liste  ?race=2  (1 = la première)
       mode    run (défaut) ou bike           ?mode=bike
-      gel     Rappel de gel aux X minutes    ?gel=30  (0 = caché)
+      gel     Rappel de gel aux X minutes    ?gel=25  (absent ou 0 = caché)
       accent  Couleur d'accent, sans #       ?accent=C8F03C
       chat    0 pour cacher le chat          ?chat=0
       hrmax   FC max -> échelle de zones     ?hrmax=180&hrrest=45  (Karvonen si hrrest, sinon % FC max)
@@ -63,11 +63,10 @@
   .card .unit { font-size: 17px; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; text-transform: uppercase; }
   .card .slot small { font-family: Inter, system-ui, sans-serif; font-size: 20px; font-weight: 500; color: var(--muted); margin-left: 8px; }
 
-  .zones { position: absolute; left: 24px; right: 24px; bottom: 18px; display: flex; gap: 4px; }
+  .zones { position: absolute; left: 24px; right: 24px; bottom: 14px; display: flex; gap: 4px; }
   .zones .z { flex: 1; }
-  .zones .bar { height: 8px; border-radius: 4px; }
-  .zones .lim { margin-top: 6px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
-  .zones .lim b { font-weight: 600; margin-right: 3px; }
+  .zones .bar { height: 12px; border-radius: 6px; }
+  .zones .lim { margin-top: 5px; font-size: 18px; font-weight: 700; font-variant-numeric: tabular-nums; white-space: nowrap; }
   .guide { position: absolute; border: 2px dashed var(--accent); border-radius: 6px; padding: 6px 8px; font: 15px/1.35 ui-monospace, Menlo, monospace; color: #fff; background: rgba(0,0,0,0.55); }
   #help { position: absolute; left: 48px; top: 150px; width: 760px; padding: 18px 22px; font-size: 17px; line-height: 1.5; }
   #help code { font-family: ui-monospace, Menlo, monospace; color: var(--accent); }
@@ -136,14 +135,14 @@
   // Cards. "fmt" = what to type in the matching Moblin text widget.
   const CARDS = mode === "bike" ? [
     { label: "FRÉQ. CARDIAQUE", zones: true, fmt: "{heartrate:garmin watch}", sample: "158", unit: "bpm" },
-    { label: "VITESSE", fmt: "{speed:km/h}", sample: "31.4", unit: "km/h" },
-    { label: "DISTANCE", fmt: "{distance:km}", sample: "48.2", unit: "km" },
-    { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "412", unit: "m" }
+    { label: "VITESSE", fmt: "{speed:km/h}", sample: "31 km/h", unit: "" },
+    { label: "DISTANCE", fmt: "{distance}", sample: "48.2 km", unit: "" },
+    { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "412 m", unit: "" }
   ] : [
     { label: "FRÉQ. CARDIAQUE", zones: true, fmt: "{heartrate:garmin watch}", sample: "162", unit: "bpm" },
     { label: "ALLURE", fmt: "{runningpace:hrm 600}", sample: "4:52", unit: "min/km" },
-    { label: "DISTANCE", fmt: "{distance:km}", sample: "12.4", unit: "km" },
-    { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "86", unit: "m" }
+    { label: "DISTANCE", fmt: "{distance}", sample: "12.4 km", unit: "" },
+    { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "86 m", unit: "" }
   ];
   const cardsEl = document.getElementById("cards");
   CARDS.forEach(function (c) {
@@ -158,9 +157,8 @@
       zones.forEach(function (lo, i) {
         const seg = document.createElement("div"); seg.className = "z";
         const bar = document.createElement("div"); bar.className = "bar"; bar.style.background = ZCOL[i];
-        const lim = document.createElement("div"); lim.className = "lim";
-        const b = document.createElement("b"); b.textContent = "Z" + (i + 1); b.style.color = ZCOL[i];
-        lim.appendChild(b); lim.appendChild(document.createTextNode(lo));
+        const lim = document.createElement("div"); lim.className = "lim num"; lim.style.color = ZCOL[i];
+        lim.textContent = lo + "+";
         seg.appendChild(bar); seg.appendChild(lim); z.appendChild(seg);
       });
       card.appendChild(z);
@@ -218,7 +216,7 @@
   }
 
   // Gel reminder every N minutes; flashes for 60 s when due.
-  const gelMin = parseFloat(get("gel", "30"));
+  const gelMin = parseFloat(get("gel", "0"));
   const gelEl = document.getElementById("gel");
   if (gelMin > 0) gelEl.classList.remove("hidden");
 

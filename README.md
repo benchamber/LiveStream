@@ -19,7 +19,7 @@ Everything is set in the address. You never need to edit the code.
 | `races` | Races as `name|YYYY-MM-DD`, separated by `;`. The next upcoming race is shown automatically. | `races=Race%20A|2027-06-21;Race%20B|2027-08-15` |
 | `race` | Force race number N from the list (1 = first) | `race=2` |
 | `mode` | `run` (default) or `bike`: changes the card labels | `mode=bike` |
-| `gel` | Gel reminder every N minutes (`0` hides it) | `gel=30` |
+| `gel` | Gel reminder every N minutes. Off unless set | `gel=25` |
 | `accent` | Accent colour, no `#` | `accent=C8F03C` |
 | `chat` | `0` hides chat | `chat=0` |
 | `hrmax`, `hrrest` | Heart-rate zone scale under the heart-rate number. With `hrrest`, zones use heart-rate reserve (Karvonen) at 50/60/70/80/90 %; without it, % of max | `hrmax=180&hrrest=45` |
@@ -64,10 +64,12 @@ Each scene has its own Browser widget, followed by the 4 Text widgets. The widge
 |---|---|---|
 | 1 Heart rate | `{heartrate:garmin watch}` | `{heartrate:garmin watch}` |
 | 2 Pace / Speed | `{runningpace:hrm 600}` | `{speed:km/h}` |
-| 3 Distance | `{distance:km}` | `{distance:km}` |
+| 3 Distance | `{distance}` (fallback `{distance:m}`) | `{distance}` (fallback `{distance:m}`) |
 | 4 Elevation gain | `{altitudeascent:m}` | `{altitudeascent:m}` |
 
-Style: font **DIN Condensed** (Bold), size **64**, white, background fully transparent, corner radius **0**. The units (BPM, MIN/KM, KM, M) are already printed in the card headers, so the text widgets show only the number.
+Style: font **DIN Condensed** (Bold), size **64**, white, background fully transparent, corner radius **0**. Moblin adds the unit itself for distance, elevation and speed (`12.4 km`, `86 m`, `31 km/h`). Heart rate and pace have their unit in the card header (BPM, MIN/KM).
+
+Distance: `{distance:km}` rounds to whole kilometres (Moblin prints 0 decimals with an explicit unit). Plain `{distance}` uses Moblin's automatic format, which should show decimals. If it still shows whole numbers, use `{distance:m}` (metres).
 
 **Positions** (alignment **top left**, size 100). These include the ~15 px left padding Moblin adds around text:
 
