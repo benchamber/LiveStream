@@ -45,12 +45,12 @@ The manual setup below is the same thing done by hand.
 
 | Device | Name in Moblin | Used for |
 |---|---|---|
-| Garmin watch (heart-rate broadcast on) | `Garmin watch` | `{heartrate:garmin watch}` |
-| Garmin HRM 600 chest strap | `HRM 600` | `{runningpace:hrm 600}` (run pace) |
+| Garmin HRM 600 chest strap | `HRM 600` | heart rate `{heartrate:hrm 600}` and run pace `{runningpace:hrm 600}` (pace tested on a 1 km run) |
+| Garmin watch (optional) | `Garmin watch` | backup heart rate, only if *Broadcast Heart Rate* is on: `{heartrate:garmin watch}` |
 
 Moblin ignores upper and lower case when matching these names.
 
-On the watch, turn on **heart-rate broadcast** (*Broadcast Heart Rate*, or *Broadcast During Activity*).
+Moblin reads the strap directly, so the watch does not need to broadcast. The strap also stays paired to the watch, so the watch and the stream show the same heart rate.
 
 ### 2. Two scenes: Course (run) and Vélo (bike)
 
@@ -62,7 +62,7 @@ Each scene has its own Browser widget, followed by the 4 Text widgets. The widge
 
 | Card | Course | Vélo |
 |---|---|---|
-| 1 Heart rate | `{heartrate:garmin watch}` | `{heartrate:garmin watch}` |
+| 1 Heart rate | `{heartrate:hrm 600}` | `{heartrate:hrm 600}` |
 | 2 Pace / Speed | `{runningpace:hrm 600}` | `{speed:km/h}` |
 | 3 Distance | `{distance}` (fallback `{distance:m}`) | `{distance}` (fallback `{distance:m}`) |
 | 4 Elevation gain | `{altitudeascent:m}` | `{altitudeascent:m}` |
@@ -93,7 +93,7 @@ To check, add `&guide=1` to the browser URL. The dashed boxes show where each te
 
 ### Pace in min/km
 
-Moblin has a single pace code, `{runningpace:DEVICE}`. It reads a Bluetooth *Running Speed and Cadence* sensor, **not GPS**. The watch broadcasts heart rate only, so pace comes from the HRM 600 if it shares pace over Bluetooth. That still needs to be confirmed on a test run. If the card shows `-`, the strap does not, and GPS speed (`{speed:km/h}`) is the fallback. Also check that the pace shows min/km and not min/mile.
+Moblin has a single pace code, `{runningpace:DEVICE}`. It reads a Bluetooth *Running Speed and Cadence* sensor, not GPS. The HRM 600 estimates pace from stride motion and shares it with Moblin (confirmed on a 1 km test). On the bike, use GPS speed `{speed:km/h}`.
 
 ## Final addresses
 
