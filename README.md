@@ -83,6 +83,12 @@ Distance: `{distance:km}` rounds to whole kilometres (Moblin prints 0 decimals w
 
 To check, add `&guide=1` to the browser URL. The dashed boxes show where each text widget goes. Nudge Y if the font sits a little high or low, then remove `&guide=1`.
 
+**Camera and front-camera PiP:**
+
+- Scene camera (Course and Vélo): **Back**, the wide (1×) camera. It shows what you see.
+- Front camera picture-in-picture: add the **Front** video-source widget **last** in each scene, so it is drawn on top. Alignment **Bottom right**, X **2.5**, Y **4.44**, Size **25**. That makes a 480×270 landscape window in the bottom-right corner, level with the bottom of the cards. In the widget: crop off, rounded corners on.
+- Running both cameras at once uses more battery and makes the phone warmer.
+
 **Location → Reset when going live: ON** makes distance and elevation start at 0 on each stream.
 
 ### Pace in min/km
