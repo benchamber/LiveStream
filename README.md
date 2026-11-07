@@ -45,12 +45,14 @@ The manual setup below is the same thing done by hand.
 
 | Device | Name in Moblin | Used for |
 |---|---|---|
-| Garmin HRM 600 chest strap | `HRM 600` | heart rate `{heartrate:hrm 600}` and run pace `{runningpace:hrm 600}` (pace tested on a 1 km run) |
-| Garmin watch (optional) | `Garmin watch` | backup heart rate, only if *Broadcast Heart Rate* is on: `{heartrate:garmin watch}` |
+| Garmin watch, *Broadcast Heart Rate* on | `Garmin watch` | heart rate `{heartrate:garmin watch}` |
+| Garmin HRM 600 chest strap | `HRM 600` | run pace `{runningpace:hrm 600}` (tested on a 1 km run) |
 
 Moblin ignores upper and lower case when matching these names.
 
-Moblin reads the strap directly, so the watch does not need to broadcast. The strap also stays paired to the watch, so the watch and the stream show the same heart rate.
+Heart rate comes from the watch's broadcast. Garmin's broadcast sends heart rate only, so pace has to come from the strap. If you prefer, the strap can also give heart rate: `{heartrate:hrm 600}`.
+
+Distance and elevation come from the **iPhone's GPS**, not from a sensor. The strap also has a stride-based distance (`{runningdistance:hrm 600}`), but outdoors GPS is the better source.
 
 ### 2. Two scenes: Course (run) and Vélo (bike)
 
@@ -62,7 +64,7 @@ Each scene has its own Browser widget, followed by the 4 Text widgets. The widge
 
 | Card | Course | Vélo |
 |---|---|---|
-| 1 Heart rate | `{heartrate:hrm 600}` | `{heartrate:hrm 600}` |
+| 1 Heart rate | `{heartrate:garmin watch}` | `{heartrate:garmin watch}` |
 | 2 Pace / Speed | `{runningpace:hrm 600}` | `{speed:km/h}` |
 | 3 Distance | `{distance}` (fallback `{distance:m}`) | `{distance}` (fallback `{distance:m}`) |
 | 4 Elevation gain | `{altitudeascent:m}` | `{altitudeascent:m}` |
