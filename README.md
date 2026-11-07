@@ -22,6 +22,8 @@ Everything is set in the address. You never need to edit the code.
 | `gel` | Gel reminder every N minutes (`0` hides it) | `gel=30` |
 | `accent` | Accent colour, no `#` | `accent=C8F03C` |
 | `chat` | `0` hides chat | `chat=0` |
+| `hrmax`, `hrrest` | Heart-rate zone scale under the heart-rate number. With `hrrest`, zones use heart-rate reserve (Karvonen) at 50/60/70/80/90 %; without it, % of max | `hrmax=180&hrrest=45` |
+| `zones` | Or give the 5 zone lower bounds yourself (Z1..Z5) | `zones=113,126,140,153,167` |
 | `preview` | `1` shows sample numbers and chat (for a desktop browser) | `preview=1` |
 | `guide` | `1` shows where each Moblin text widget goes (X/Y in %) | `guide=1` |
 
@@ -60,15 +62,15 @@ Cards 1, 3 and 4 are the same in both scenes. You can create them once and add t
 
 Style: transparent background, bold, large (around 64 on the 1920×1080 frame). Use monospace digits if offered.
 
-**Positions** (alignment **top left**), the same in both scenes:
+**Positions** (alignment **top left**), the same in both scenes. These are for the final addresses below, which include the zone scale. Without the zone scale, Y is 86.7 instead of 83.3.
 
 | Widget | X | Y |
 |---|---|---|
 | Browser | 0 | 0 (size 100 %) |
-| Text, card 1 | 3.8 | 86.7 |
-| Text, card 2 | 20.2 | 86.7 |
-| Text, card 3 | 36.7 | 86.7 |
-| Text, card 4 | 53.1 | 86.7 |
+| Text, card 1 | 3.8 | 83.3 |
+| Text, card 2 | 20.2 | 83.3 |
+| Text, card 3 | 36.7 | 83.3 |
+| Text, card 4 | 53.1 | 83.3 |
 
 Tip: first set the browser URL with `&guide=1` added. The dashed boxes show where each number goes. Line them up, then remove `&guide=1`.
 
@@ -88,14 +90,16 @@ Race: **IRONMAN 70.3 Maine**, Augusta, Sunday **2027-07-25**. To add races later
 Run:
 
 ```
-https://benchamber.github.io/LiveStream/overlay.html?races=Ironman%2070.3%20Maine%7C2027-07-25
+https://benchamber.github.io/LiveStream/overlay.html?races=Ironman%2070.3%20Maine%7C2027-07-25&hrmax=180&hrrest=45
 ```
 
 Bike:
 
 ```
-https://benchamber.github.io/LiveStream/overlay.html?races=Ironman%2070.3%20Maine%7C2027-07-25&mode=bike
+https://benchamber.github.io/LiveStream/overlay.html?races=Ironman%2070.3%20Maine%7C2027-07-25&hrmax=180&hrrest=45&mode=bike
 ```
+
+Heart-rate zones (max 180, resting 45, heart-rate reserve method): Z1 113–125 · Z2 126–139 · Z3 140–152 · Z4 153–166 · Z5 167–180. The scale is fixed: Moblin does not pass heart rate to the page, so the current zone cannot light up. Viewers read the zone from the live number.
 
 For lining up the text widgets, add `&guide=1` to the end, then remove it.
 

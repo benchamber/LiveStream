@@ -20,6 +20,8 @@
       gel     Rappel de gel aux X minutes    ?gel=30  (0 = caché)
       accent  Couleur d'accent, sans #       ?accent=C8F03C
       chat    0 pour cacher le chat          ?chat=0
+      hrmax   FC max -> échelle de zones     ?hrmax=180&hrrest=45  (Karvonen si hrrest, sinon % FC max)
+      zones   Ou bornes basses Z1..Z5        ?zones=113,126,140,153,167
       preview 1 = chiffres et chat d'exemple pour voir le look dans un navigateur
       guide   1 = montre où placer les widgets texte de Moblin (X/Y en %)
   */
@@ -55,10 +57,15 @@
   .msg .u { font-weight: 600; color: var(--accent); margin-right: 8px; }
 
   #cards { position: absolute; left: 48px; bottom: 48px; display: flex; gap: 16px; }
-  .card { width: 300px; height: 150px; padding: 20px 24px; position: relative; }
+  .card { width: 300px; height: var(--card-h, 150px); padding: 20px 24px; position: relative; }
   .card .slot { position: absolute; left: 24px; top: 54px; font-size: 64px; line-height: 1; white-space: nowrap; }
   .card .slot small { font-family: Inter, system-ui, sans-serif; font-size: 20px; font-weight: 500; color: var(--muted); margin-left: 8px; }
 
+  .zones { position: absolute; left: 24px; right: 24px; bottom: 18px; display: flex; gap: 4px; }
+  .zones .z { flex: 1; }
+  .zones .bar { height: 8px; border-radius: 4px; }
+  .zones .lim { margin-top: 6px; font-size: 13px; color: var(--muted); font-variant-numeric: tabular-nums; white-space: nowrap; }
+  .zones .lim b { font-weight: 600; margin-right: 3px; }
   .guide { position: absolute; border: 2px dashed var(--accent); border-radius: 6px; padding: 6px 8px; font: 15px/1.35 ui-monospace, Menlo, monospace; color: #fff; background: rgba(0,0,0,0.55); }
   #help { position: absolute; left: 48px; top: 150px; width: 760px; padding: 18px 22px; font-size: 17px; line-height: 1.5; }
   #help code { font-family: ui-monospace, Menlo, monospace; color: var(--accent); }
@@ -113,14 +120,25 @@
   if (accent.length === 6 || accent.length === 3) document.documentElement.style.setProperty("--accent", "#" + accent);
   document.getElementById("title").textContent = get("title", "ROAD TO 70.3");
 
+  // Heart-rate zones: 5 lower bounds, from ?zones= or from ?hrmax (+ ?hrrest = Karvonen).
+  const ZCOL = ["#3d7bd9", "#1fa89a", "#7cc242", "#f59331", "#e5484d"];
+  let zones = get("zones", "").split(",").map(Number).filter(function (n) { return n > 0; });
+  const hrMax = parseFloat(get("hrmax", "")), hrRest = parseFloat(get("hrrest", "")) || 0;
+  if (zones.length !== 5 && hrMax > 0) {
+    zones = [0.5, 0.6, 0.7, 0.8, 0.9].map(function (f) { return Math.round(hrRest + f * (hrMax - hrRest)); });
+  }
+  if (zones.length !== 5) zones = null;
+  const CARD_H = zones ? 186 : 150;
+  stage.style.setProperty("--card-h", CARD_H + "px");
+
   // Cards. "fmt" = what to type in the matching Moblin text widget.
   const CARDS = mode === "bike" ? [
-    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:garmin watch}", sample: "158", unit: "bpm" },
+    { label: "FRÉQ. CARDIAQUE", zones: true, fmt: "{heartrate:garmin watch}", sample: "158", unit: "bpm" },
     { label: "VITESSE", fmt: "{speed:km/h}", sample: "31.4", unit: "km/h" },
     { label: "DISTANCE", fmt: "{distance:km}", sample: "48.2", unit: "km" },
     { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "412", unit: "m" }
   ] : [
-    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:garmin watch}", sample: "162", unit: "bpm" },
+    { label: "FRÉQ. CARDIAQUE", zones: true, fmt: "{heartrate:garmin watch}", sample: "162", unit: "bpm" },
     { label: "ALLURE", fmt: "{runningpace:foot pod}", sample: "4:52", unit: "min/km" },
     { label: "DISTANCE", fmt: "{distance:km}", sample: "12.4", unit: "km" },
     { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "86", unit: "m" }
@@ -131,6 +149,18 @@
     card.className = "card pill";
     const l = document.createElement("div"); l.className = "label"; l.textContent = c.label;
     card.appendChild(l);
+    if (zones && c.zones) {
+      const z = document.createElement("div"); z.className = "zones";
+      zones.forEach(function (lo, i) {
+        const seg = document.createElement("div"); seg.className = "z";
+        const bar = document.createElement("div"); bar.className = "bar"; bar.style.background = ZCOL[i];
+        const lim = document.createElement("div"); lim.className = "lim";
+        const b = document.createElement("b"); b.textContent = "Z" + (i + 1); b.style.color = ZCOL[i];
+        lim.appendChild(b); lim.appendChild(document.createTextNode(lo));
+        seg.appendChild(bar); seg.appendChild(lim); z.appendChild(seg);
+      });
+      card.appendChild(z);
+    }
     if (preview) {
       const s = document.createElement("div"); s.className = "slot num"; s.textContent = c.sample;
       const u = document.createElement("small"); u.textContent = c.unit; s.appendChild(u);
@@ -149,8 +179,8 @@
       "Nomme le foot pod <code>foot pod</code> (allure en course).";
     stage.appendChild(help);
     CARDS.forEach(function (c, i) {
-      // Card i sits at left 48 + i*(300+16), top 1080-48-150; the number slot is 24/54 px inside.
-      const x = 48 + i * 316 + 24, y = H - 48 - 150 + 54;
+      // Card i sits at left 48 + i*(300+16), top 1080-48-CARD_H; the number slot is 24/54 px inside.
+      const x = 48 + i * 316 + 24, y = H - 48 - CARD_H + 54;
       const g = document.createElement("div");
       g.className = "guide";
       g.style.left = (x - 10) + "px"; g.style.top = (y - 6) + "px";
