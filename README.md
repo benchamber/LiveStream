@@ -31,57 +31,61 @@ In the address, a space is written `%20` and `|` can be written `%7C`.
 
 ## Moblin setup
 
-### 1. Sensors
+### Fastest way: import the prepared settings
 
-1. On the Garmin watch, turn on **heart-rate broadcast**. On Garmin it is called *Broadcast Heart Rate*, or *Broadcast During Activity* in the heart-rate sensor settings.
-2. In Moblin, go to **Settings → Workout devices**, add a device, scan, and pick the watch.
-3. Name it **`garmin watch`**, in lowercase. Moblin reads the name inside `{heartrate:…}` in lowercase, so a lowercase name avoids a mismatch. The space is fine.
-4. Running pace needs a **foot pod** that broadcasts Bluetooth *Running Speed and Cadence*. Add it the same way and give it a lowercase name, e.g. `foot pod`. See *Pace in min/km* below.
+Claude can build a Moblin settings file from your own export, with everything below already set up. **That file contains stream keys and passwords, so it never goes into this public repository.**
 
-### 2. Two scenes: Run and Bike
+1. Moblin → **Settings → Import and export settings → Export**. Keep that file as a backup.
+2. Give it to Claude. You get back a file with the **Course** and **Vélo** scenes.
+3. Moblin → **Import and export settings → Import from file**. The import **replaces** all settings, which is why it starts from your own export. It is not available while live or recording.
 
-Make two scenes in **Settings → Scenes**. Each one has the camera, its own Browser widget and its own 4 Text widgets. The Text widgets must be drawn above the Browser widget, which must be above the camera.
+The manual setup below is the same thing done by hand.
 
-**Browser widget** (**Settings → Widgets → +** → type **Browser**). Make one for each sport:
+### 1. Sensors (Settings → Workout devices)
 
-- URL: the run or bike address (see *Final addresses*)
-- Width **1920**, Height **1080**
-- **Moblin access: ON** (without it, chat stays empty)
-- Mode: leave the default (*Periodic, audio and video*)
+| Device | Name in Moblin | Used for |
+|---|---|---|
+| Garmin watch (heart-rate broadcast on) | `Garmin watch` | `{heartrate:garmin watch}` |
+| Garmin HRM 600 chest strap | `HRM 600` | `{runningpace:hrm 600}` (run pace) |
 
-**Text widgets.** Make one per card:
+Moblin ignores upper and lower case when matching these names.
 
-| Card | Run scene | Bike scene |
+On the watch, turn on **heart-rate broadcast** (*Broadcast Heart Rate*, or *Broadcast During Activity*).
+
+### 2. Two scenes: Course (run) and Vélo (bike)
+
+Each scene has its own Browser widget, followed by the 4 Text widgets. The widget listed last is drawn on top, so the Browser widget comes first.
+
+**Browser widget:** URL = the run or bike address (see *Final addresses*), Width **1920**, Height **1080**, **Moblin access ON**, default mode.
+
+**Text widgets:**
+
+| Card | Course | Vélo |
 |---|---|---|
 | 1 Heart rate | `{heartrate:garmin watch}` | `{heartrate:garmin watch}` |
-| 2 Pace / Speed | `{runningpace:foot pod}`: pace (min/km) | `{speed:km/h}`: speed |
+| 2 Pace / Speed | `{runningpace:hrm 600}` | `{speed:km/h}` |
 | 3 Distance | `{distance:km}` | `{distance:km}` |
 | 4 Elevation gain | `{altitudeascent:m}` | `{altitudeascent:m}` |
 
-Cards 1, 3 and 4 are the same in both scenes. You can create them once and add them to both scenes.
+Style: font **DIN Condensed** (Bold), size **64**, white, background fully transparent, corner radius **0**. The units (BPM, MIN/KM, KM, M) are already printed in the card headers, so the text widgets show only the number.
 
-Style: transparent background, bold, large (around 64 on the 1920×1080 frame). Use monospace digits if offered.
-
-**Positions** (alignment **top left**), the same in both scenes. These are for the final addresses below, which include the zone scale. Without the zone scale, Y is 86.7 instead of 83.3.
+**Positions** (alignment **top left**, size 100). These include the ~15 px left padding Moblin adds around text:
 
 | Widget | X | Y |
 |---|---|---|
-| Browser | 0 | 0 (size 100 %) |
-| Text, card 1 | 3.8 | 83.3 |
-| Text, card 2 | 20.2 | 83.3 |
-| Text, card 3 | 36.7 | 83.3 |
-| Text, card 4 | 53.1 | 83.3 |
+| Browser | 0 | 0 |
+| Text, card 1 | 2.97 | 82.59 |
+| Text, card 2 | 19.43 | 82.59 |
+| Text, card 3 | 35.89 | 82.59 |
+| Text, card 4 | 52.34 | 82.59 |
 
-Tip: first set the browser URL with `&guide=1` added. The dashed boxes show where each number goes. Line them up, then remove `&guide=1`.
+To check, add `&guide=1` to the browser URL. The dashed boxes show where each text widget goes. Nudge Y if the font sits a little high or low, then remove `&guide=1`.
 
-If the numbers are hidden behind the cards, move the Text widgets above the Browser widget in the scene list.
+**Location → Reset when going live: ON** makes distance and elevation start at 0 on each stream.
 
 ### Pace in min/km
 
-Moblin has only one pace code, `{runningpace:DEVICE}`. Its value comes from a Bluetooth foot pod (Running Speed and Cadence), **not from the phone's GPS**. A Garmin watch broadcasts heart rate only, so without a foot pod the pace card shows `-`.
-
-- **With a foot pod:** use `{runningpace:foot pod}`. Check on the first run that it shows min/km and not min/mile. Moblin may follow the phone's unit settings.
-- **Without a foot pod:** GPS only gives speed: `{speed:km/h}`. The run card label still says "ALLURE / min/km", so the label would need changing too.
+Moblin has a single pace code, `{runningpace:DEVICE}`. It reads a Bluetooth *Running Speed and Cadence* sensor, **not GPS**. The watch broadcasts heart rate only, so pace comes from the HRM 600 if it shares pace over Bluetooth. That still needs to be confirmed on a test run. If the card shows `-`, the strap does not, and GPS speed (`{speed:km/h}`) is the fallback. Also check that the pace shows min/km and not min/mile.
 
 ## Final addresses
 

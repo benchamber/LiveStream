@@ -59,6 +59,8 @@
   #cards { position: absolute; left: 48px; bottom: 48px; display: flex; gap: 16px; }
   .card { width: 300px; height: var(--card-h, 150px); padding: 20px 24px; position: relative; }
   .card .slot { position: absolute; left: 24px; top: 54px; font-size: 64px; line-height: 1; white-space: nowrap; }
+  .card .head { display: flex; justify-content: space-between; align-items: baseline; }
+  .card .unit { font-size: 17px; letter-spacing: 0.08em; color: var(--muted); font-weight: 600; text-transform: uppercase; }
   .card .slot small { font-family: Inter, system-ui, sans-serif; font-size: 20px; font-weight: 500; color: var(--muted); margin-left: 8px; }
 
   .zones { position: absolute; left: 24px; right: 24px; bottom: 18px; display: flex; gap: 4px; }
@@ -139,7 +141,7 @@
     { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "412", unit: "m" }
   ] : [
     { label: "FRÉQ. CARDIAQUE", zones: true, fmt: "{heartrate:garmin watch}", sample: "162", unit: "bpm" },
-    { label: "ALLURE", fmt: "{runningpace:foot pod}", sample: "4:52", unit: "min/km" },
+    { label: "ALLURE", fmt: "{runningpace:hrm 600}", sample: "4:52", unit: "min/km" },
     { label: "DISTANCE", fmt: "{distance:km}", sample: "12.4", unit: "km" },
     { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "86", unit: "m" }
   ];
@@ -147,8 +149,10 @@
   CARDS.forEach(function (c) {
     const card = document.createElement("div");
     card.className = "card pill";
+    const head = document.createElement("div"); head.className = "head";
     const l = document.createElement("div"); l.className = "label"; l.textContent = c.label;
-    card.appendChild(l);
+    const un = document.createElement("div"); un.className = "unit"; un.textContent = c.unit;
+    head.appendChild(l); head.appendChild(un); card.appendChild(head);
     if (zones && c.zones) {
       const z = document.createElement("div"); z.className = "zones";
       zones.forEach(function (lo, i) {
@@ -163,7 +167,6 @@
     }
     if (preview) {
       const s = document.createElement("div"); s.className = "slot num"; s.textContent = c.sample;
-      const u = document.createElement("small"); u.textContent = c.unit; s.appendChild(u);
       card.appendChild(s);
     }
     cardsEl.appendChild(card);
@@ -173,17 +176,17 @@
   if (guide) {
     const help = document.createElement("div");
     help.id = "help"; help.className = "pill";
-    help.innerHTML = "<b>Mode guide</b> — dans Moblin, ajoute un widget <b>Texte</b> par case : ancrage <b>haut gauche</b>, " +
-      "fond <b>transparent</b>, police grasse, chiffres monospace, taille ≈ 64. Tape la valeur <code>X</code>/<code>Y</code> indiquée. " +
+    help.innerHTML = "<b>Mode guide</b> — dans Moblin, ajoute un widget <b>Texte</b> par case (ou importe le fichier de réglages préparé) : ancrage <b>haut gauche</b>, " +
+      "fond <b>transparent</b>, coins 0, police <b>DIN Condensed Bold</b>, taille <b>64</b>. Tape la valeur <code>X</code>/<code>Y</code> indiquée. " +
       "Dans Moblin → Workout devices, nomme ta montre <code>garmin watch</code>, en minuscules. " +
-      "Nomme le foot pod <code>foot pod</code> (allure en course).";
+      "Nomme la ceinture HRM 600 <code>hrm 600</code> (allure en course).";
     stage.appendChild(help);
     CARDS.forEach(function (c, i) {
       // Card i sits at left 48 + i*(300+16), top 1080-48-CARD_H; the number slot is 24/54 px inside.
-      const x = 48 + i * 316 + 24, y = H - 48 - CARD_H + 54;
+      const x = 48 + i * 316 + 24 - 15, y = H - 48 - CARD_H + 54 - 8;
       const g = document.createElement("div");
       g.className = "guide";
-      g.style.left = (x - 10) + "px"; g.style.top = (y - 6) + "px";
+      g.style.left = x + "px"; g.style.top = y + "px";
       g.textContent = CARDS[i].fmt + "\nX " + (x / W * 100).toFixed(1) + " %  Y " + (y / H * 100).toFixed(1) + " %";
       g.style.whiteSpace = "pre";
       stage.appendChild(g);
