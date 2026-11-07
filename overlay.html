@@ -115,13 +115,13 @@
 
   // Cards. "fmt" = what to type in the matching Moblin text widget.
   const CARDS = mode === "bike" ? [
-    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:NOM_GARMIN}", sample: "158", unit: "bpm" },
+    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:garmin watch}", sample: "158", unit: "bpm" },
     { label: "VITESSE", fmt: "{speed:km/h}", sample: "31.4", unit: "km/h" },
     { label: "DISTANCE", fmt: "{distance:km}", sample: "48.2", unit: "km" },
     { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "412", unit: "m" }
   ] : [
-    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:NOM_GARMIN}", sample: "162", unit: "bpm" },
-    { label: "ALLURE", fmt: "{runningpace:NOM_CAPTEUR}", sample: "4:52", unit: "min/km" },
+    { label: "FRÉQ. CARDIAQUE", fmt: "{heartrate:garmin watch}", sample: "162", unit: "bpm" },
+    { label: "ALLURE", fmt: "{runningpace:foot pod}", sample: "4:52", unit: "min/km" },
     { label: "DISTANCE", fmt: "{distance:km}", sample: "12.4", unit: "km" },
     { label: "DÉNIVELÉ +", fmt: "{altitudeascent:m}", sample: "86", unit: "m" }
   ];
@@ -145,7 +145,8 @@
     help.id = "help"; help.className = "pill";
     help.innerHTML = "<b>Mode guide</b> — dans Moblin, ajoute un widget <b>Texte</b> par case : ancrage <b>haut gauche</b>, " +
       "fond <b>transparent</b>, police grasse, chiffres monospace, taille ≈ 64. Tape la valeur <code>X</code>/<code>Y</code> indiquée. " +
-      "Remplace <code>NOM_GARMIN</code> par le nom de ta montre tel qu'il apparaît dans Moblin → Workout devices.";
+      "Dans Moblin → Workout devices, nomme ta montre <code>garmin watch</code>, en minuscules. " +
+      "Nomme le foot pod <code>foot pod</code> (allure en course).";
     stage.appendChild(help);
     CARDS.forEach(function (c, i) {
       // Card i sits at left 48 + i*(300+16), top 1080-48-150; the number slot is 24/54 px inside.
